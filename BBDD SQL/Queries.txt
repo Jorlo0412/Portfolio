@@ -1,0 +1,95 @@
+Contamos la cantidad de peliculas para cada género.
+
+SELECT C.name as Género,
+COUNT(O.title) as Películas
+FROM category C INNER JOIN old_HDD O
+ON C.category_id = O.category_id
+GROUP BY (O.category_id)
+--------------------------------------------------------
+
+Lista de peliculas con su categoría, duración y actor(nombre completo concatenando first name y last name) 
+ que aparece ordenadas por Actor. En orden descendiente
+
+SELECT F.title as TITULO,
+A.first_name||' '||A.last_name  as ACTOR,
+C.name as CATEGORIA,
+F.length as Duración
+FROM film F LEFT JOIN old_HDD O
+ON F.title = O.title LEFT JOIN category C
+ON C.category_id = O.category_id LEFT JOIN actor A
+ON A.actor_id = O.actor_id ORDER BY (ACTOR) DESC;
+--------------------------------------------------------------
+
+Que películas hace falta reponer en la tienda 1 porque hay menos de 2 unidades. ********************************
+Mostramos titulo, cantidad y precio
+
+CREATE TABLE reposicion AS SELECT F.title as TITULO,
+V.store_id as TIENDA,
+V.qty as CANTIDAD,
+F.replacement_cost as PRECIO
+FROM film F INNER JOIN inv_film V
+ON F.film_id = V.film_id
+WHERE TIENDA = 1 AND CANTIDAD <=2
+
+film.title, inv_film.store_id, inv_film.qty, film.replacement_cost
+-----------------------------------------------------------------
+
+Creamos una tabla temporal  de otra tabla temporal que nos muestra la cantidad de peliculas en cada tienda y su valor estimado. *********************
+
+CREATE TABLE Presu_tienda AS SELECT ROUND(Total_Films,2) AS TOTAL_PELIS, ROUND(Precio,2) AS TOTAL_PRECIO,
+Tienda FROM(
+SELECT SUM(I.qty) AS Total_Films,
+SUM(F.replacement_cost) AS Precio,
+I.store_id AS Tienda
+FROM inv_film I INNER JOIN film F GROUP BY Tienda
+) AS "Tabla Temporal"
+ORDER BY Tienda DESC
+-----------------------------------------------------------------
+
+Veremos titulo, lenguaje, categoria, el rating de edad y extras
+
+SELECT F.title as TITULO,
+l.name  as LENGUAJE,
+C.name as CATEGORIA,
+F.rating as EDAD,
+f.special_features as EXTRAS FROM film F
+LEFT JOIN "language" l
+ON f.language_id = l.language_id
+LEFT JOIN old_HDD O ON F.title = O.title
+LEFT JOIN category C ON C.category_id = O.category_id;
+-------------------------------------------------------------------
+
+Sacamos las peliculas según su Rating
+
+SELECT F.title as TITULO,
+l.name  as LENGUAJE,
+F.rating as EDAD FROM film F
+LEFT JOIN "language" l
+ON f.language_id = l.language_id
+LEFT JOIN old_HDD O ON F.title = O.title
+LEFT JOIN category C ON C.category_id = O.category_id
+WHERE RATING = "NC-17" and LENGUAJE = "English";
+-------------------------------------------------------------------
+Las mejor valoradas
+
+SELECT f.title as PELICULA,
+F.rental_rate as MEJOR_VALORADAS,
+i.qty  as CANTIDAD,
+i.store_id as TIENDA FROM film F
+LEFT JOIN inv_film i
+ON f.film_id = i.film_id
+ORDER BY MEJOR_VALORADAS desc
+limit 3;
+-------------------------------------------------------------------
+Localización de las tiendas
+
+SELECT f.title as PELICULA,
+F.rental_rate as MEJOR_VALORADAS,
+i.qty  as CANTIDAD,
+e.store as TIENDA,
+f.replacement_cost FROM film F
+LEFT JOIN inv_film i
+ON f.film_id = i.film_id
+LEFT JOIN emp e on e.store_id = i.store_id
+ORDER BY MEJOR_VALORADAS desc
+limit 8;
